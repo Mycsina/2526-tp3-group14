@@ -1,6 +1,7 @@
 
 #include <cmath>
 #include <cstdint>
+#include <cstring>
 
 #include "print.h"
 #include "bunnyIO.h"
@@ -9,7 +10,7 @@
 #include "bunnyMIP.h"
 #include "device-bunnyMIP.h"
 
-inline float d2r(float angle) { return angle * M_PI / 360.0; }
+inline float d2r(float angle) { return angle * M_PI / 180.0; }
 
 void generate_rotation_matrix(float pitch, float yaw, float roll, float* R, bool inverse = false) {
     float cp = std::cos(pitch); float sp = std::sin(pitch);
@@ -48,6 +49,27 @@ void generate_rotation_matrix(float pitch, float yaw, float roll, float* R, bool
 int main(int argc, char* argv[]) {
     print("CLE2026 - BunnyMIP\n");
 
+    uint16_t threshold = 1 << 15;
+    float sigma = 1.0;
+    float pitch = 0.0, yaw = 0.0, roll = 0.0;
+
+    for (int i = 1; i < argc; i++) {
+        if (std::strcmp(argv[i], "--threshold") == 0 && i + 1 < argc) {
+            threshold = (uint16_t)std::atoi(argv[++i]);
+        } else if (std::strcmp(argv[i], "--sigma") == 0 && i + 1 < argc) {
+            sigma = std::atof(argv[++i]);
+        } else if (std::strcmp(argv[i], "--roll") == 0 && i + 1 < argc) {
+            roll = std::atof(argv[++i]);
+        } else if (std::strcmp(argv[i], "--pitch") == 0 && i + 1 < argc) {
+            pitch = std::atof(argv[++i]);
+        } else if (std::strcmp(argv[i], "--yaw") == 0 && i + 1 < argc) {
+            yaw = std::atof(argv[++i]);
+        }
+    }
+
+    print("  threshold=%u sigma=%.2f pitch=%.1f yaw=%.1f roll=%.1f\n",
+          threshold, sigma, pitch, yaw, roll);
+
     uint16_t* volume = loadBunnyCT("data");
 
     // Raster output when running on the host
@@ -56,10 +78,7 @@ int main(int argc, char* argv[]) {
     uint16_t* d_raster = new uint16_t[kBunnySize*kBunnySize];
 
     float R[3*3];
-    generate_rotation_matrix(d2r(0), d2r(0), d2r(0), R);
-
-    uint16_t threshold = 1 << 15;
-    float sigma = 1.0;
+    generate_rotation_matrix(d2r(pitch), d2r(yaw), d2r(roll), R);
 
     // CPU
     host_bunny_mip(volume, threshold, sigma, R, h_raster);
