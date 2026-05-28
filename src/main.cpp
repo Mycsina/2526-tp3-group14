@@ -88,16 +88,21 @@ int main(int argc, char* argv[]) {
     int raster_size = kBunnySize * kBunnySize;
     int diff = 0;
     for (int i = 0; i < raster_size; i++) {
-        int local_diff = abs((int)h_raster[i]) - ((int)d_raster[i]);
-        if (local_diff > 2)
-            diff = diff + 1;
+        int d = abs((int)h_raster[i] - (int)d_raster[i]);
+        if (d > 2)
+            diff++;
     }
 
-    print("\n>> Output difference: %.2f%%\n", (diff / (float)raster_size) * 100.0);
+    float pct = (diff / (float)raster_size) * 100.0f;
+    print("\n>> Output difference: %.2f%%\n", pct);
+    print("VALIDATION: diff_pct=%.4f threshold=2 pixels_exceeding=%d total=%d\n",
+          pct, diff, raster_size);
 
     savePGM16("output/bunnyMIP_cpu.pgm", h_raster, kBunnySize, kBunnySize);
     savePGM16("output/bunnyMIP_gpu.pgm", d_raster, kBunnySize, kBunnySize);
 
     delete [] volume;
-    return 0;
+    delete [] h_raster;
+    delete [] d_raster;
+    return (pct > 1.0f) ? 1 : 0;
 }
