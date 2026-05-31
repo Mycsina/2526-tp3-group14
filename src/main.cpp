@@ -2,6 +2,7 @@
 #include <cmath>
 #include <cstdint>
 #include <cstring>
+#include <chrono>
 
 #include "print.h"
 #include "bunnyIO.h"
@@ -81,9 +82,24 @@ int main(int argc, char* argv[]) {
     generate_rotation_matrix(d2r(pitch), d2r(yaw), d2r(roll), R);
 
     // CPU
+    auto start_cpu = std::chrono::high_resolution_clock::now();
     host_bunny_mip(volume, threshold, sigma, R, h_raster);
+    auto end_cpu = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> cpu_ms = end_cpu - start_cpu;
+
+    
     // GPU (CUDA)
+    auto start_gpu = std::chrono::high_resolution_clock::now();
     device_bunny_mip(volume, threshold, sigma , R, d_raster);
+    auto end_gpu = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> gpu_ms = end_gpu - start_gpu;
+
+    double speedup = cpu_ms.count() / gpu_ms.count();
+
+    print("\n>> Performance Analysis:\n");
+    print("  CPU Time: %.2f ms\n", cpu_ms.count());
+    print("  GPU Time: %.2f ms\n", gpu_ms.count());
+    print("  Speedup: %.2fx\n", speedup);
 
     int raster_size = kBunnySize * kBunnySize;
     int diff = 0;
