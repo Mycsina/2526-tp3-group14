@@ -53,6 +53,8 @@ int main(int argc, char* argv[]) {
     uint16_t threshold = 1 << 15;
     float sigma = 1.0;
     float pitch = 0.0, yaw = 0.0, roll = 0.0;
+    float final_pitch = 0.0, final_yaw = 0.0, final_roll = 0.0;
+    int steps = 1;
 
     for (int i = 1; i < argc; i++) {
         if (std::strcmp(argv[i], "--threshold") == 0 && i + 1 < argc) {
@@ -65,11 +67,19 @@ int main(int argc, char* argv[]) {
             pitch = std::atof(argv[++i]);
         } else if (std::strcmp(argv[i], "--yaw") == 0 && i + 1 < argc) {
             yaw = std::atof(argv[++i]);
+        } else if (std::strcmp(argv[i], "--final_roll") == 0 && i + 1 < argc) {
+            final_roll = std::atof(argv[++i]);
+        } else if (std::strcmp(argv[i], "--final_pitch") == 0 && i + 1 < argc) {
+            final_pitch = std::atof(argv[++i]);
+        } else if (std::strcmp(argv[i], "--final_yaw") == 0 && i + 1 < argc) {
+            final_yaw = std::atof(argv[++i]);
+        } else if (std::strcmp(argv[i], "--steps") == 0 && i + 1 < argc) {
+            steps = std::atoi(argv[++i]);
         }
     }
 
-    print("  threshold=%u sigma=%.2f pitch=%.1f yaw=%.1f roll=%.1f\n",
-          threshold, sigma, pitch, yaw, roll);
+    print("  threshold=%u sigma=%.2f pitch=%.1f yaw=%.1f roll=%.1f\n", threshold, sigma, pitch, yaw, roll);
+    print("  final_pitch=%.1f final_yaw=%.1f final_roll=%.1f steps = %d\n", final_pitch, final_yaw, final_roll, steps);
 
     uint16_t* volume = loadBunnyCT("data");
 
@@ -116,6 +126,33 @@ int main(int argc, char* argv[]) {
 
     savePGM16("output/bunnyMIP_cpu.pgm", h_raster, kBunnySize, kBunnySize);
     savePGM16("output/bunnyMIP_gpu.pgm", d_raster, kBunnySize, kBunnySize);
+
+    if (steps > 1) {
+        // Raster output when running on the GPU
+        uint16_t* d_rasters = new uint16_t[kBunnySize*kBunnySize*steps];
+        float Rs[3*3*steps];
+        float pitch_step = (pitch + final_pitch) / (steps + 1.f);
+        float yaw_step = (yaw + final_yaw) / (steps + 1.f);
+        float roll_step = (roll + final_roll) / (steps + 1.f);
+
+        for (int i = 0; i < steps; i++)
+            generate_rotation_matrix(d2r(pitch + i * pitch_step), d2r(yaw + i * yaw_step), d2r(roll + i * roll_step), &Rs[3*3*i]);
+
+        // GPU (CUDA) - batch MIP
+        device_bunny_multiple_mip(volume, threshold, sigma , Rs, d_rasters, 36);
+
+        for (int i = 0; i < steps; i++) {
+            char filename[64];
+            sprintf(filename, "output/bunnyMIP_gpu_frame%02d.pgm", i);
+            savePGM16(filename, &d_rasters[kBunnySize*kBunnySize*i], kBunnySize, kBunnySize);
+        }
+
+        std::string ffmpeg_save_video = "ffmpeg -y -framerate 10 -i output/bunnyMIP_gpu_frame%02d.pgm -c:v libx264 -pix_fmt yuv420p output/bunny_video.mp4";
+        int ret = std::system(ffmpeg_save_video.c_str());
+        if (ret) printf("Saving video failed\n");
+
+        delete [] d_rasters;
+    }
 
     delete [] volume;
     delete [] h_raster;
