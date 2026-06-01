@@ -19,7 +19,7 @@ echo "==> Syncing to ${USER}@${SERVER}:${REMOTE_DIR}..."
 SSHPASS="${PASSWORD}" sshpass -e rsync -avz --delete \
     --include='src/' --include='src/**' \
     --include='Makefile' --include='*.cu' --include='*.h' --include='*.cuh' \
-    --include='*.sh' \
+    --include='*.sh' --include='README.md'\
     --exclude='*' \
     ./ "${USER}@${SERVER}:${REMOTE_DIR}/"
 

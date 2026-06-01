@@ -67,26 +67,24 @@ The application was benchmarked using the Stanford Bunny CT scan dataset ($512\t
 
 | Threshold | Sigma | Pitch | Yaw | Roll | CPU Time (ms) | GPU Time (ms) | Speedup |
 |:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| 32768 | 1.0 | 0 | 0 | 0 | [TBD] | [TBD] | [TBD]x |
-| 8192 | 1.0 | 0 | 0 | 0 | [TBD] | [TBD] | [TBD]x |
-| 16384 | 1.0 | 0 | 0 | 0 | [TBD] | [TBD] | [TBD]x |
-| 49152 | 1.0 | 0 | 0 | 0 | [TBD] | [TBD] | [TBD]x |
-| 32768 | 0.5 | 0 | 0 | 0 | [TBD] | [TBD] | [TBD]x |
-| 32768 | 2.0 | 0 | 0 | 0 | [TBD] | [TBD] | [TBD]x |
-| 32768 | 3.0 | 0 | 0 | 0 | [TBD] | [TBD] | [TBD]x |
-| 32768 | 1.0 | 45 | 0 | 0 | [TBD] | [TBD] | [TBD]x |
-| 32768 | 1.0 | 0 | 45 | 0 | [TBD] | [TBD] | [TBD]x |
-| 32768 | 1.0 | 45 | 45 | 45 | [TBD] | [TBD] | [TBD]x |
-| 8192 | 2.5 | 30 | 60 | 90 | [TBD] | [TBD] | [TBD]x |
+|     32768 |   1.0 |     0 |   0 |    0 |       6862.19 |        838.19 |    8.19x |
+|      8192 |   1.0 |     0 |   0 |    0 |       6669.60 |        826.79 |    8.07x |
+|     16384 |   1.0 |     0 |   0 |    0 |       6977.69 |        840.12 |    8.31x |
+|     49152 |   1.0 |     0 |   0 |    0 |       6948.30 |        832.54 |    8.35x |
+|     32768 |   0.5 |     0 |   0 |    0 |       6687.83 |        829.32 |    8.06x |
+|     32768 |   2.0 |     0 |   0 |    0 |       6642.08 |        831.54 |    7.99x |
+|     32768 |   3.0 |     0 |   0 |    0 |       6852.14 |        844.32 |    8.12x |
+|     32768 |   1.0 |    45 |   0 |    0 |       4773.57 |        833.46 |    5.73x |
+|     32768 |   1.0 |     0 |  45 |    0 |       5684.42 |        837.86 |    6.78x |
+|     32768 |   1.0 |    45 |  45 |   45 |       6132.30 |        848.44 |    7.23x |
+|      8192 |   2.5 |    30 |  60 |   90 |       5568.17 |        839.07 |    6.64x |
 
 ### Speedup and Performance Discussion
 
-- **Overall Speedup:** ...
+- **Overall Speedup:** The overall speedup sits between 6x and 8x depending on the options. 
 
-- **Impact of Thresholding:** ...
+- **Impact of Thresholding:** The treshold does not seem to affect the speedup or the execution time, which makes sense since the number of comparisons is not being affected, only the number being compared against is being affected. 
 
-- **Impact of Gaussian Blur (Sigma):** ...
+- **Impact of Gaussian Blur (Sigma):** Similarly to the thresholding, the Gaussian Blur does not affect speedup or execution time since only the content, rather than the amount, of operations is being affected.
 
-- **Impact of Rotation (Ray-Casting Complexity):** ...
-
-- **Memory Transfer Overhead:** ...
+- **Impact of Rotation (Ray-Casting Complexity):** Changing the rotation away from (0,0,0) negatively affects speedup, but does not seem to negatively affect GPU execution time. In fact, it seems to speed up CPU execution time.
