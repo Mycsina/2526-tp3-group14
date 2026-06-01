@@ -14,11 +14,13 @@
 
 Compiling the application: make
 
-Running the application: `./bunnyMIP [--threshold ] [--sigma ] [--roll ] [--pitch ] [--yaw ]`
+Running the application: `./bunnyMIP [--threshold ] [--sigma ] [--roll ] [--pitch ] [--yaw ] [--final_roll ] [--final_pitch ] [--final_yaw ]   [--steps ]`
 
 - `--threshold`: Defines the intensity floor. Any voxel below this value is set to 0 (default: 32768).
 - `--sigma`: Defines the standard deviation ($\sigma$) used to calculate the Gaussian weights for the blur filter (default: 1.0).
-- `--roll`, `--pitch`, `--yaw`: Defines the rotation of the volume in degrees (default: 0.0 for all).
+- `--roll`, `--pitch`, `--yaw`: Defines the (starting) rotation of the volume in degrees (default: 0.0 for all).
+- `--final_roll`, `--final_pitch`, `--final_yaw`: Defines the final rotation of the volume in degrees (default: 0.0 for all).
+- `--steps`: Defines how many in how many steps will the volume rotating from the starting rotation to the final rotation be rendered (default: 1)
 
 **Validating the implementation:**
 A validation script is provided to compare the GPU output against the CPU "gold standard" across multiple parameter sets.
@@ -52,7 +54,10 @@ The maximum intensity is then written to the thread's respective pixel on the ou
 
 **Innovation (Additional Features)**
 
-[TODO]
+A kernel that can calculate several MIP images was added. It is based on the already existing kernel for just one MIP image, but it uses a 3D block
+since the variable amout of images can be interpreted as the third dimension. Each thread in the kernel corresponds to a single pixel in a single output image. 
+
+The `main.cpp` program has been updated to call the new kernel if the `--steps` argument is set to more than 1. If `--steps` is set to more than 1, it animates the volume rotating from its starting rotation to its final rotation in `steps` frames. It saves each individual frame of the animation as its own image in the output/ folder and, if `ffmpeg` is installed on the host, it also saves the animation as a .mp4 video. 
 
 ## Analysis
 
